@@ -28,9 +28,9 @@ class FallingObject {
     public getY(): number {
         return this.y;
     }
-  }
-  
-  class Boat {
+}
+
+class Boat {
     private x: number;
     private y: number;
     private width: number;
@@ -41,7 +41,7 @@ class FallingObject {
         this.x = x;
         this.y = y;
         this.width = width;
-        this.height = height; // Fixed typo
+        this.height = height;
         this.image = new Image();
         this.image.src = imageUrl;
     }
@@ -63,6 +63,10 @@ class FallingObject {
             }
         }
     }
+
+    public setX(x: number): void {
+        this.x = x;
+    }
   
     public getX(): number {
         return this.x;
@@ -79,9 +83,9 @@ class FallingObject {
     public getHeight(): number {
         return this.height;
     }
-  }
-  
-  class Airplane {
+}
+
+class Airplane {
     private x: number;
     private y: number;
     private width: number;
@@ -129,9 +133,9 @@ class FallingObject {
     public getHeight(): number {
         return this.height;
     }
-  }
-  
-  class Game {
+}
+
+class Game {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private height: number = window.innerHeight;
@@ -153,12 +157,11 @@ class FallingObject {
         this.ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
   
         const restartButton = document.getElementById('restartButton');
-          if (restartButton) 
-            {
+        if (restartButton) {
             restartButton.addEventListener('click', this.restartGame.bind(this));
-           }
+        }
   
-        this.boat = new Boat(this.width / 2 - 50, this.height - 100, 100, 50, 'boat.jpg');
+        this.boat = new Boat(this.width / 2 , this.height - 120, 100, 70, 'boat.jpg');
         this.airplane = new Airplane(-100, 50, 200, 100, 'plane.jpg', 2);
   
         this.addEventListeners();
@@ -176,7 +179,7 @@ class FallingObject {
         if (!this.fallingObject && this.airplane.getX() > 1 && !this.ballDropped) {
             const x = this.airplane.getX() + this.airplane.getWidth() / 2;
             const y = this.airplane.getY() + this.airplane.getHeight();
-            const size = Math.random() * 30 + 10;
+            const size = 20;
             const imageUrl = 'ball.jpg';
             this.fallingObject = new FallingObject(x, y, size, imageUrl);
             this.ballDropped = true;
@@ -210,9 +213,6 @@ class FallingObject {
         }
     }
     
-       
-    
-  
     private addEventListeners(): void {
         document.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowLeft') {
@@ -221,21 +221,38 @@ class FallingObject {
                 this.boat.move('right', this.boatSpeed, this.width);
             }
         });
+
+        const sensitivityFactor = 0.2; // Adjust this value to control sensitivity
+
+        this.canvas.addEventListener('mousemove', (event) => {
+            const mouseX = event.clientX - this.canvas.getBoundingClientRect().left;
+            const boatX = mouseX - this.boat.getWidth() / 2; // Adjust for boat width
+            // Ensure the boat stays within the canvas boundaries
+            if (boatX < 0) {
+                this.boat.setX(0);
+            } else if (boatX + this.boat.getWidth() > this.width) {
+                this.boat.setX(this.width - this.boat.getWidth());
+            } else {
+                // Adjust boat movement based on sensitivity factor
+                const delta = boatX - this.boat.getX();
+                this.boat.setX(this.boat.getX() + delta * sensitivityFactor);
+            }
+        });
     }
-  
+
     private gameLoop(): void {
         this.gameLoopHandle = requestAnimationFrame(this.gameLoop.bind(this));
         this.update();
         this.render();
     }
-  
+
     private update(): void {
         this.airplane.fly();
         this.dropBallFromAirplane();
-  
+
         if (this.fallingObject) {
             this.fallingObject.fall(this.ballSpeed);
-  
+
             if (this.isColliding(this.fallingObject)) {
                 this.score += 20;
                 this.fallingObject = null;
@@ -251,7 +268,7 @@ class FallingObject {
             }
         }
     }
-  
+
     private isColliding(obj: FallingObject): boolean {
         const boatLeft = this.boat.getX();
         const boatRight = boatLeft + this.boat.getWidth();
@@ -265,44 +282,44 @@ class FallingObject {
             obj['y'] <= boatBottom
         );
     }
-  
+
     private render(): void {
         this.ctx.clearRect(0, 0, this.width, this.height);
-        this.ctx.fillStyle = 'royalblue';
-        this.ctx.fillRect(0, this.height - 50, this.width, 50);
+        
         this.airplane.draw(this.ctx);
-  
+
         if (this.fallingObject) {
             this.fallingObject.draw(this.ctx);
         }
-  
+
         this.boat.draw(this.ctx);
-  
+        this.ctx.fillStyle = 'royalblue';
+        this.ctx.fillRect(0, this.height - 50, this.width, 50);
         this.ctx.fillStyle = 'black';
         this.ctx.font = '40px Arial';
         this.ctx.textAlign = 'right';
         this.ctx.fillText(`Score: ${this.score}`, this.width - 10, 30);
         this.ctx.fillText(`Hearts: ${this.hearts}`, this.width - 10, 60);
     }
-  
+
     private restartGame(): void {
         if (this.gameLoopHandle !== null) {
             cancelAnimationFrame(this.gameLoopHandle);
         }
-    
+
         // Reset the restart button style to hide it
         const restartButton = document.getElementById('restartButton');
         if (restartButton) {
             restartButton.style.display = 'none';
         }
-    
+
         this.score = 0;
         this.hearts = 3;
         this.initFallingObject();
-    
+
         this.gameLoop();
     }
-    
-  }
-  
-  new Game();
+}
+
+new Game();
+

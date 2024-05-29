@@ -26,7 +26,7 @@ var Boat = /** @class */ (function () {
         this.x = x;
         this.y = y;
         this.width = width;
-        this.height = height; // Fixed typo
+        this.height = height;
         this.image = new Image();
         this.image.src = imageUrl;
     }
@@ -46,6 +46,9 @@ var Boat = /** @class */ (function () {
                 this.x = boundaryWidth - this.width;
             }
         }
+    };
+    Boat.prototype.setX = function (x) {
+        this.x = x;
     };
     Boat.prototype.getX = function () {
         return this.x;
@@ -116,7 +119,7 @@ var Game = /** @class */ (function () {
         if (restartButton) {
             restartButton.addEventListener('click', this.restartGame.bind(this));
         }
-        this.boat = new Boat(this.width / 2 - 50, this.height - 100, 100, 50, 'boat.jpg');
+        this.boat = new Boat(this.width / 2, this.height - 120, 100, 70, 'boat.jpg');
         this.airplane = new Airplane(-100, 50, 200, 100, 'plane.jpg', 2);
         this.addEventListeners();
         this.initFallingObject();
@@ -130,7 +133,7 @@ var Game = /** @class */ (function () {
         if (!this.fallingObject && this.airplane.getX() > 1 && !this.ballDropped) {
             var x = this.airplane.getX() + this.airplane.getWidth() / 2;
             var y = this.airplane.getY() + this.airplane.getHeight();
-            var size = Math.random() * 30 + 10;
+            var size = 20;
             var imageUrl = 'ball.jpg';
             this.fallingObject = new FallingObject(x, y, size, imageUrl);
             this.ballDropped = true;
@@ -167,6 +170,23 @@ var Game = /** @class */ (function () {
             }
             else if (event.key === 'ArrowRight') {
                 _this.boat.move('right', _this.boatSpeed, _this.width);
+            }
+        });
+        var sensitivityFactor = 0.2; // Adjust this value to control sensitivity
+        this.canvas.addEventListener('mousemove', function (event) {
+            var mouseX = event.clientX - _this.canvas.getBoundingClientRect().left;
+            var boatX = mouseX - _this.boat.getWidth() / 2; // Adjust for boat width
+            // Ensure the boat stays within the canvas boundaries
+            if (boatX < 0) {
+                _this.boat.setX(0);
+            }
+            else if (boatX + _this.boat.getWidth() > _this.width) {
+                _this.boat.setX(_this.width - _this.boat.getWidth());
+            }
+            else {
+                // Adjust boat movement based on sensitivity factor
+                var delta = boatX - _this.boat.getX();
+                _this.boat.setX(_this.boat.getX() + delta * sensitivityFactor);
             }
         });
     };
@@ -209,13 +229,13 @@ var Game = /** @class */ (function () {
     };
     Game.prototype.render = function () {
         this.ctx.clearRect(0, 0, this.width, this.height);
-        this.ctx.fillStyle = 'royalblue';
-        this.ctx.fillRect(0, this.height - 50, this.width, 50);
         this.airplane.draw(this.ctx);
         if (this.fallingObject) {
             this.fallingObject.draw(this.ctx);
         }
         this.boat.draw(this.ctx);
+        this.ctx.fillStyle = 'royalblue';
+        this.ctx.fillRect(0, this.height - 50, this.width, 50);
         this.ctx.fillStyle = 'black';
         this.ctx.font = '40px Arial';
         this.ctx.textAlign = 'right';
